@@ -1,0 +1,79 @@
+.cif-viewer-app {
+  --cifv-bg: #ffffff;
+  --cifv-panel-bg: #fafafa;
+  --cifv-fg: #000000;
+  --cifv-border: #cccccc;
+
+  font-family: system-ui, sans-serif;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: var(--cifv-fg);
+}
+
+.cif-viewer-app h1 {
+  text-align: center;
+}
+
+.cif-viewer-app #panel {
+  background: var(--cifv-panel-bg);
+  border-radius: 20px;
+  padding: 1.5rem;
+}
+
+.cif-viewer-app #fileInput {
+  font-size: 1.15rem;
+  padding: 0.6rem 1rem 0.6rem 0;
+}
+
+.cif-viewer-app textarea {
+  width: 100%;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+  background: var(--cifv-bg);
+  color: var(--cifv-fg);
+  border: 1px solid var(--cifv-border);
+}
+
+.cif-viewer-app #amcHeaderOutput {
+  overflow-y: hidden;
+}
+
+.cif-viewer-app .cif-viewer-btn {
+  /* Keep the host theme's own button coloring (background/text/border-radius) -
+     only override its sizing, which is usually set with !important for theme/
+     page-builder button styles and so needs !important here too to actually win. */
+  margin-bottom: 0.5rem !important;
+  font-size: 0.9rem !important;
+  line-height: normal !important;
+  padding: 0.35rem 0.9rem !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+}
+
+.cif-viewer-app #copyHeaderBtn {
+  display: block;
+}
+
+.cif-viewer-app #apiSection label,
+.cif-viewer-app #apiSection button {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.cif-viewer-app #apiSection label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cif-viewer-app #apiSection label span {
+  display: inline-block;
+  width: 6.5rem;
+  flex-shrink: 0;
+}
+
+.cif-viewer-app #crystalSystemDisplay {
+  font-weight: bold;
+}
