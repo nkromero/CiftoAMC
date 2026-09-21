@@ -1,0 +1,77 @@
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --panel-bg: #fafafa;
+  --fg: #000000;
+  --border: #cccccc;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+h1 {
+  text-align: center;
+}
+
+#panel {
+  background: var(--panel-bg);
+  border-radius: 20px;
+  padding: 1.5rem;
+}
+
+#fileInput {
+  font-size: 1.15rem;
+  padding: 0.6rem 1rem 0.6rem 0;
+}
+
+textarea {
+  width: 100%;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+
+#amcHeaderOutput {
+  overflow-y: hidden;
+}
+
+button {
+  margin-bottom: 0.5rem;
+}
+
+#copyHeaderBtn {
+  display: block;
+  font-size: 1rem;
+  padding: 0.4rem 1rem;
+}
+
+#apiSection label,
+#apiSection button {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+#apiSection label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#apiSection label span {
+  display: inline-block;
+  width: 6.5rem;
+  flex-shrink: 0;
+}
+
+#crystalSystemDisplay {
+  font-weight: bold;
+}

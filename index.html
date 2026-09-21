@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CIF Viewer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>CIF Viewer</h1>
+
+  <div id="panel">
+    <p>Select a .cif file to read its data.</p>
+
+    <input type="file" id="fileInput" accept=".cif,text/plain">
+
+    <div id="apiSection">
+      <h3>Fetch record from AMCSD API</h3>
+      <label><span>Record UUID:</span> <input type="text" id="recordUuidInput" size="40"></label>
+      <label><span>API Token:</span> <input type="password" id="apiTokenInput" size="40"></label>
+      <button id="fetchApiBtn">Fetch</button>
+      <div id="apiStatus"></div>
+    </div>
+
+    <div id="output">
+      <h3>AMC Header</h3>
+      <button id="copyHeaderBtn">Copy</button>
+      <textarea id="amcHeaderOutput" readonly></textarea>
+      <p id="crystalSystemDisplay"></p>
+    </div>
+
+    <div id="citationSection">
+      <h3>Format Citation</h3>
+      <p>Paste a citation like: Authors (Year) Title. Journal Volume, Pages</p>
+      <textarea id="citationInput" rows="3"></textarea>
+      <button id="formatCitationBtn">Format</button>
+      <button id="copyCitationBtn">Copy</button>
+      <div id="citationStatus"></div>
+      <textarea id="citationOutput" readonly rows="6"></textarea>
+    </div>
+  </div>
+
+  <script src="spacegroups.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
