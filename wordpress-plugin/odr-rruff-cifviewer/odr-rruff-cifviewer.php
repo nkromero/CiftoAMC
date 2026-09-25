@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: CIF Viewer
+ * Plugin Name: ODR RRUFF CIF Viewer
  * Description: Reads a CIF and creates the AMC header
  * Version: 1.0.0
  * Author: Nathan
@@ -42,7 +42,7 @@ function cif_viewer_render_settings_page() {
 					<th scope="row"><label for="cif_viewer_api_token">AMCSD API Token</label></th>
 					<td>
 						<input type="password" id="cif_viewer_api_token" name="cif_viewer_api_token" value="<?php echo esc_attr( get_option( 'cif_viewer_api_token', '' ) ); ?>" size="60">
-						<p class="description">Optional. Prefills the API Token field on the [cif_viewer] form, same as config.js did in the standalone app.</p>
+						<p class="description">Optional. Used by the [odr_rruff_cifviewer] shortcode to fetch records from the AMCSD API automatically.</p>
 					</td>
 				</tr>
 			</table>
@@ -124,4 +124,4 @@ function cif_viewer_shortcode() {
 	<?php
 	return ob_get_clean();
 }
-add_shortcode( 'cif_viewer', 'cif_viewer_shortcode' );
+add_shortcode( 'odr_rruff_cifviewer', 'cif_viewer_shortcode' );
