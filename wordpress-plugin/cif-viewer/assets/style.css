@@ -36,7 +36,10 @@
   border: 1px solid var(--cifv-border);
 }
 
-.cif-viewer-app #amcHeaderOutput {
+.cif-viewer-app #amcHeaderOutput,
+.cif-viewer-app #amcToCifOutput,
+.cif-viewer-app #citationInput,
+.cif-viewer-app #citationOutput {
   overflow-y: hidden;
 }
 
@@ -76,4 +79,9 @@
 
 .cif-viewer-app #crystalSystemDisplay {
   font-weight: bold;
+}
+
+.cif-viewer-app #amcToCifSection input[type="file"] {
+  display: block;
+  margin-bottom: 0.5rem;
 }

@@ -64,6 +64,8 @@ function cif_viewer_register_assets() {
 	wp_register_style( 'cif-viewer-style', CIF_VIEWER_URL . 'assets/style.css', array(), cif_viewer_asset_version( 'assets/style.css' ) );
 	wp_register_script( 'cif-viewer-spacegroups', CIF_VIEWER_URL . 'assets/spacegroups.js', array(), cif_viewer_asset_version( 'assets/spacegroups.js' ), true );
 	wp_register_script( 'cif-viewer-app', CIF_VIEWER_URL . 'assets/app.js', array( 'cif-viewer-spacegroups' ), cif_viewer_asset_version( 'assets/app.js' ), true );
+	wp_register_script( 'cif-viewer-amc2cif', CIF_VIEWER_URL . 'assets/amc2cif.js', array( 'cif-viewer-spacegroups' ), cif_viewer_asset_version( 'assets/amc2cif.js' ), true );
+	wp_register_script( 'cif-viewer-amc2cif-ui', CIF_VIEWER_URL . 'assets/amc2cif-ui.js', array( 'cif-viewer-app', 'cif-viewer-amc2cif' ), cif_viewer_asset_version( 'assets/amc2cif-ui.js' ), true );
 
 	$token = get_option( 'cif_viewer_api_token', '' );
 	wp_add_inline_script( 'cif-viewer-spacegroups', 'window.AMCSD_API_TOKEN = ' . wp_json_encode( $token ) . ';', 'before' );
@@ -74,6 +76,8 @@ function cif_viewer_shortcode() {
 	wp_enqueue_style( 'cif-viewer-style' );
 	wp_enqueue_script( 'cif-viewer-spacegroups' );
 	wp_enqueue_script( 'cif-viewer-app' );
+	wp_enqueue_script( 'cif-viewer-amc2cif' );
+	wp_enqueue_script( 'cif-viewer-amc2cif-ui' );
 
 	ob_start();
 	?>
@@ -86,28 +90,34 @@ function cif_viewer_shortcode() {
 			<input type="file" id="fileInput" accept=".cif,text/plain">
 
 			<div id="apiSection">
-				<h3>Fetch record from AMCSD API</h3>
-				<label><span>Record UUID:</span> <input type="text" id="recordUuidInput" size="40"></label>
-				<label><span>API Token:</span> <input type="password" id="apiTokenInput" size="40"></label>
-				<button id="fetchApiBtn" class="cif-viewer-btn" type="button">Fetch</button>
+				<h3>AMCSD Record</h3>
 				<div id="apiStatus"></div>
 			</div>
 
 			<div id="output">
 				<h3>AMC Header</h3>
 				<button id="copyHeaderBtn" class="cif-viewer-btn" type="button">Copy</button>
-				<textarea id="amcHeaderOutput" readonly></textarea>
+				<textarea id="amcHeaderOutput" readonly rows="1"></textarea>
 				<p id="crystalSystemDisplay"></p>
+			</div>
+
+			<div id="amcToCifSection">
+				<h3>AMC &rarr; CIF</h3>
+				<p>Select a .amc file to convert it to CIF.</p>
+				<input type="file" id="amcFileInput" accept=".amc,text/plain">
+				<div id="amcToCifStatus"></div>
+				<button id="copyAmcToCifBtn" class="cif-viewer-btn" type="button">Copy</button>
+				<textarea id="amcToCifOutput" readonly rows="1"></textarea>
 			</div>
 
 			<div id="citationSection">
 				<h3>Format Citation</h3>
 				<p>Paste a citation like: Authors (Year) Title. Journal Volume, Pages</p>
-				<textarea id="citationInput" rows="3"></textarea>
+				<textarea id="citationInput" rows="1"></textarea>
 				<button id="formatCitationBtn" class="cif-viewer-btn" type="button">Format</button>
 				<button id="copyCitationBtn" class="cif-viewer-btn" type="button">Copy</button>
 				<div id="citationStatus"></div>
-				<textarea id="citationOutput" readonly rows="6"></textarea>
+				<textarea id="citationOutput" readonly rows="1"></textarea>
 			</div>
 		</div>
 	</div>

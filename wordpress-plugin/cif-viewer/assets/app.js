@@ -7,10 +7,14 @@ function tokenizeLine(line) {
     if (i >= len) break;
     if (line[i] === '#') break;
     if (line[i] === "'" || line[i] === '"') {
+      // Per the CIF spec, a quote only closes the string when immediately
+      // followed by whitespace or end-of-line - an embedded quote with no
+      // following space (e.g. the apostrophe in "D'Ippolito") is just part
+      // of the value, not a terminator.
       const quote = line[i];
       const start = i + 1;
-      let end = line.indexOf(quote, start);
-      if (end === -1) end = len;
+      let end = start;
+      while (end < len && !(line[end] === quote && (end + 1 >= len || /\s/.test(line[end + 1])))) end++;
       tokens.push(line.slice(start, end));
       i = end + 1;
     } else {
@@ -113,6 +117,16 @@ function parseCIF(text) {
         dataLines.push(tokenLineIndex[i]);
         if (tokenIsBlock[i]) anyBlockToken = true;
         i++;
+      }
+
+      // Some CIFs (apparently converted from an .amc file by another tool) leak
+      // that format's own "END" table-terminator in as stray trailing text after
+      // the loop's real data - it's never legitimate loop data, so drop it before
+      // chunking into rows, or it becomes a bogus extra row (e.g. a fake atom
+      // labeled "END").
+      while (dataTokens.length > 0 && /^END$/i.test(dataTokens[dataTokens.length - 1])) {
+        dataTokens.pop();
+        dataLines.pop();
       }
 
       const rows = [];
@@ -225,7 +239,8 @@ function convertCitationMarkup(text) {
     .replace(/_(.+?)_/g, '$1')
     .replace(/<i>(.*?)<\/i>/gi, '$1')
     .replace(/·/g, '*')
-    .replace(/\^(.+?)\^/g, '$1');
+    .replace(/\^(.+?)\^/g, '$1')
+    .replace(/◻/g, '[]');
 }
 
 function sanitizeCitationText(text) {
@@ -272,18 +287,23 @@ function getMineralName(data, apiRecord, fileName) {
 function convertHermannMauguinToWyckoffSpaceGroup(hmSpaceGroup) {
   if (!hmSpaceGroup) return '';
 
+  // An origin-choice/setting suffix (": 1", ": 2", ": H") is appended after
+  // the symbol itself, e.g. "P 1 1 m : 1" -> "Pm:1" - pull it off before the
+  // axis-setting cleanup below (which strips lone "1"s, and would otherwise
+  // eat the "1" here too), then reattach it verbatim at the end.
+  const originMatch = hmSpaceGroup.match(/\s*:\s*(\S+)\s*$/);
+  const originSuffix = originMatch ? `:${originMatch[1]}` : '';
+  const symbol = originMatch ? hmSpaceGroup.slice(0, originMatch.index) : hmSpaceGroup;
+
   let numSpaces = 0;
-  for (const ch of hmSpaceGroup) {
+  for (const ch of symbol) {
     if (ch === ' ') numSpaces++;
   }
 
-  let wyckoff = hmSpaceGroup;
-  if (numSpaces > 1 && !hmSpaceGroup.includes('P 3') && !hmSpaceGroup.includes('P -3')) {
+  let wyckoff = symbol;
+  if (numSpaces > 1 && !symbol.includes('P 3') && !symbol.includes('P -3')) {
     wyckoff = wyckoff.split(' 1').join('');
   }
-
-  wyckoff = wyckoff.split(' :H').join('');
-  wyckoff = wyckoff.split(' :').join('');
 
   // Some CIFs write screw-axis subscripts as e.g. "2(1)" instead of "21" -
   // (n) always means the same thing as the digit-pair form, so normalize it
@@ -305,7 +325,7 @@ function convertHermannMauguinToWyckoffSpaceGroup(hmSpaceGroup) {
   wyckoff = wyckoff.toLowerCase();
   wyckoff = wyckoff.charAt(0).toUpperCase() + wyckoff.slice(1);
 
-  return wyckoff;
+  return wyckoff + originSuffix;
 }
 
 function getSpaceGroupSymbolFromITNumber(number) {
@@ -464,15 +484,17 @@ function matchThirdFraction(numericValue) {
   return null;
 }
 
-// Fractional coordinates are conventionally kept in (-1, 1): a value like "1.22111(8)"
-// (used e.g. for a twin-related position shifted by a unit translation) is really the
-// same as "0.22111", and refinement uncertainty in parens is dropped, and any leading
-// zero before the decimal point is dropped too, e.g. "-0.35390(4)" -> "-.35390". A
-// coordinate fixed by symmetry has no refinement uncertainty and is written by the
-// refinement software padded to match the column width of refined values (e.g.
-// "0.500000"), so trailing zeros are trimmed down to the true value (-> ".5") - but
-// only when there's no uncertainty, since for a genuinely refined value (e.g.
-// "0.7520(5)") a trailing zero is real precision and must be kept as-is.
+// A value's integer part (e.g. the "1" in "1.08330") is kept as-is, not
+// collapsed to 0 - the real published AMC files keep it too (a twin-related
+// position shifted by a whole unit translation is written out with that
+// offset, not silently wrapped into (-1, 1)). Refinement uncertainty in
+// parens is dropped, and a leading zero before the decimal point is dropped,
+// e.g. "-0.35390(4)" -> "-.35390". A coordinate fixed by symmetry has no
+// refinement uncertainty and is written by the refinement software padded to
+// match the column width of refined values (e.g. "0.500000"), so trailing
+// zeros are trimmed down to the true value (-> ".5") - but only when there's
+// no uncertainty, since for a genuinely refined value (e.g. "0.7520(5)") a
+// trailing zero is real precision and must be kept as-is.
 function formatAmcCoordinate(rawValue, allowThirds) {
   if (rawValue === undefined) return rawValue;
   const hasUncertainty = /\(\d+\)/.test(rawValue);
@@ -483,11 +505,13 @@ function formatAmcCoordinate(rawValue, allowThirds) {
     const fraction = matchThirdFraction(numericValue);
     if (fraction) return fraction;
   }
-  const decimalMatch = value.match(/^(-?)\d+\.(\d+)$/);
+  const decimalMatch = value.match(/^(-?)(\d+)\.(\d+)$/);
   if (decimalMatch) {
-    const [, sign, rawDecimals] = decimalMatch;
+    const [, sign, intPart, rawDecimals] = decimalMatch;
     const decimals = hasUncertainty ? rawDecimals : rawDecimals.replace(/0+$/, '');
-    return `${sign}.${decimals}`;
+    if (decimals === '') return intPart === '0' ? '0' : `${sign}${intPart}`;
+    const intPrefix = intPart === '0' ? '' : intPart;
+    return `${sign}${intPrefix}.${decimals}`;
   }
   const intMatch = value.match(/^(-?)(\d+)$/);
   if (intMatch && intMatch[2] === '1') return '0';
@@ -680,13 +704,8 @@ document.getElementById('fileInput').addEventListener('change', event => {
   reader.readAsText(file);
 });
 
-// Local convenience only - config.js is git-ignored, so a token pasted there
-// never gets committed. Falls back to blank (typed in by hand) if that file
-// doesn't exist or the token wasn't filled in.
-if (typeof window.AMCSD_API_TOKEN === 'string' && window.AMCSD_API_TOKEN) {
-  document.getElementById('apiTokenInput').value = window.AMCSD_API_TOKEN;
-}
-
+// window.AMCSD_API_TOKEN is set server-side by cif-viewer.php from the
+// stored plugin setting.
 let lastApiRequestTime = 0;
 
 async function rateLimitedFetch(url, options) {
@@ -697,25 +716,18 @@ async function rateLimitedFetch(url, options) {
 }
 
 async function fetchAmcsdRecord(uuid, token) {
-  const res = await rateLimitedFetch(`https://zeta.odr.io/api/v4/dataset/record/${uuid}`, {
+  const res = await rateLimitedFetch(`https://www.odr.io/api/v4/dataset/record/${uuid}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error(`Request failed: ${res.status} ${res.statusText}`);
   return res.json();
 }
 
-document.getElementById('fetchApiBtn').addEventListener('click', async () => {
-  const uuid = document.getElementById('recordUuidInput').value.trim();
-  const token = document.getElementById('apiTokenInput').value.trim();
+async function fetchRecordForUuid(uuid) {
   const status = document.getElementById('apiStatus');
-
-  if (!uuid) {
-    status.textContent = 'Enter a record UUID first.';
-    return;
-  }
-
   status.textContent = 'Fetching...';
   try {
+    const token = typeof window.AMCSD_API_TOKEN === 'string' ? window.AMCSD_API_TOKEN : '';
     currentApiRecord = await fetchAmcsdRecord(uuid, token);
     status.textContent = 'Fetched successfully.';
     if (currentCifData) renderData(currentCifData);
@@ -723,7 +735,15 @@ document.getElementById('fetchApiBtn').addEventListener('click', async () => {
   } catch (err) {
     status.textContent = `Error: ${err.message}`;
   }
-});
+}
+
+// The record loads automatically from ?UUID=<record-uuid> in the page URL.
+const recordId = new URLSearchParams(window.location.search).get('UUID');
+if (recordId) {
+  fetchRecordForUuid(recordId.trim());
+} else {
+  document.getElementById('apiStatus').textContent = 'No record UUID in URL (expected ?UUID=...).';
+}
 
 function copyTextarea(id) {
   const textarea = document.getElementById(id);
@@ -825,4 +845,7 @@ document.getElementById('formatCitationBtn').addEventListener('click', () => {
     status.textContent = '';
     output.value = formatted;
   }
+  autoSizeTextarea(output);
 });
+
+document.getElementById('citationInput').addEventListener('input', event => autoSizeTextarea(event.target));
