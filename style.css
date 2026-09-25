@@ -40,7 +40,10 @@ textarea {
   border: 1px solid var(--border);
 }
 
-#amcHeaderOutput {
+#amcHeaderOutput,
+#amcToCifOutput,
+#citationInput,
+#citationOutput {
   overflow-y: hidden;
 }
 
@@ -74,4 +77,40 @@ button {
 
 #crystalSystemDisplay {
   font-weight: bold;
+}
+
+.matrix-table {
+  border-collapse: collapse;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.matrix-table th,
+.matrix-table td {
+  padding: 0.5rem 1rem;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.matrix-table thead th {
+  background: var(--panel-bg);
+  font-style: italic;
+  font-weight: 600;
+}
+
+.matrix-table tbody th {
+  background: var(--panel-bg);
+  font-style: italic;
+  font-weight: 600;
+}
+
+.matrix-table td.diagonal {
+  background: #eef4ff;
+  font-weight: 600;
+}
+
+#amcToCifSection input[type="file"] {
+  display: block;
+  margin-bottom: 0.5rem;
 }
